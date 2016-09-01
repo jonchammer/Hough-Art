@@ -5,182 +5,226 @@
 #include "Image.h"
 using namespace std;
 
+const double PI = 3.1415926535;
+
 struct Arguments
 {
-	string srcImageFilename;
-	string destImageFilename;	
+    string srcImageFilename;
+    int srcChannel;
+    
+    string destImageFilename;
+    size_t destImageWidth;
+    size_t destImageHeight;
+    
+    double minThetaDegrees;
+    double maxThetaDegrees;
+    size_t minY;
+    size_t maxY;
+    size_t minContrast;
+    
+    // Assign default values for each argument
+    Arguments() : 
+        srcChannel(-1),
+        destImageFilename("../images/output.png"), 
+        destImageWidth(320), 
+        destImageHeight(160),
+        minThetaDegrees(0.0),
+        maxThetaDegrees(180.0),
+        minY(0),
+        maxY(0),
+        minContrast(64)
+    {}
 };
 
 bool parseArguments(int argc, char** argv, Arguments& args)
 {
-	if (argc < 2)
-	{
-		cerr << "Usage: houghart input.jpg [-o output.png]" << endl;
-		return false;
-	}
-	
-	args.srcImageFilename = argv[1];
-	
-	for (int i = 2; i < argc; ++i)
-	{
-		if (strcmp(argv[i], "-o"))
-		{
-			args.destImageFilename = argv[i];
-			++i;
-		}
-	}
-	
-	// Set some default values for the arguments
-	if (args.destImageFilename == "")
-		args.destImageFilename = "../images/output.png";
-	
-	return true;
+    if (argc < 2)
+    {
+        cerr << "Usage: houghart input.jpg [-o output.png] [-w 1024] [-h 768]" << endl;
+        return false;
+    }
+
+    args.srcImageFilename = argv[1];
+
+    for (int i = 2; i < argc; ++i)
+    {
+        if (strcmp(argv[i], "-o") == 0)
+        {
+            args.destImageFilename = argv[i + 1];
+            ++i;
+        }
+        else if (strcmp(argv[i], "-w") == 0)
+        {
+            args.destImageWidth = atoi(argv[i + 1]);
+            ++i;
+        }
+        else if (strcmp(argv[i], "-h") == 0)
+        {
+            args.destImageHeight = atoi(argv[i + 1]);
+            ++i;
+        }
+        else if (strcmp(argv[i], "-c") == 0)
+        {
+            args.srcChannel = atoi(argv[i + 1]);
+            ++i;
+        }
+        else if (strcmp(argv[i], "-m") == 0)
+        {
+            args.minThetaDegrees = atof(argv[i + 1]);
+            ++i;
+        }
+        else if (strcmp(argv[i], "-M") == 0)
+        {
+            args.maxThetaDegrees = atof(argv[i + 1]);
+            ++i;
+        }
+    }
+    
+    return true;
 }
 
-bool highContrast(Image& input, size_t channel, int x, int y, int minContrast)
+bool highContrast(Image& input, size_t channel, int centerX, int centerY, int minContrast)
 {
-	byte* pixels  = input.getData();
-	size_t width  = input.getWidth();
-	size_t height = input.getHeight();
-	
-	byte centerValue = pixels[4 * (y * width + x) + channel];
-	if (centerValue == 0xFF) return false;
-	
-	for (int i = 8; i >= 0; --i)
-	{
-		if (i == 4)
-			continue;
-		
-		int newX = x + (i % 3) - 1;
-		int newY = y + (i / 3) - 1;
-		if (newX < 0 || newX >= (int) width || newY < 0 || newY >= (int) height)
-			continue;
-		
-		if (abs((pixels[4 * (newY * width + newX) + channel]) - centerValue) >= minContrast)
-			return true;
-	}
-	
-	return false;
+    byte* pixels     = input.getData();
+    size_t width     = input.getWidth();
+    size_t height    = input.getHeight();
+    char centerValue = pixels[4 * (centerY * width + centerX) + channel];
+
+    for (int y = -1; y <= 1; ++y)
+    {
+        int newY = centerY + y;
+        if (newY < 0 || newY >= (int) height)
+            continue;
+        
+        for (int x = -1; x <= 1; ++x)
+        {
+            int newX = centerX + x;
+            if (newX < 0 || newX >= (int) width)
+                continue;
+            
+            int index = 4 * (newY * width + newX) + channel;
+            if (abs((char)pixels[index] - centerValue) >= minContrast)
+                return true;
+        }
+    }
+    
+    return false;
 }
 	
-void houghTransform(Image& input, Image& output, size_t channel,
-	double minTheta, double maxTheta, size_t thetaLevels, size_t radiusLevels, 
-	size_t minY, size_t maxY, size_t minContrast)
+void houghTransform(Image& input, Image& output, size_t channel, Arguments& args)
 {
-	size_t width  = input.getWidth();
-	size_t height = input.getHeight();
-	
-	size_t oWidth      = output.getWidth();
-	size_t oHeight     = output.getHeight();
-	
-	size_t* accumulationBuffer = new size_t[oWidth * oHeight];
-	byte* outputPixels = output.getData();
-	
-	size_t maxRadius     = (int)ceil(sqrt(width * width + height * height));
-	size_t halfRAxisSize = radiusLevels >> 1;
-	
-	// X output ranges from minTheta to maxTheta degrees
-	// Y output ranges from -maxRadius to maxRadius
-	const double DEGREES_TO_RADIANS = 3.1415926535 / 180.0;
-	const double range              = maxTheta - minTheta;
-	
-	// Precompute the sin and cos values we will use for each value of theta
-	double* sinTable = new double[thetaLevels];
-	double* cosTable = new double[thetaLevels];
-	for (size_t theta = 0; theta < thetaLevels; ++theta)
-	{
-		double thetaDegrees = (theta * range) / thetaLevels + minTheta;
-		double thetaRadians = thetaDegrees * DEGREES_TO_RADIANS;
-		sinTable[theta]     = sin(thetaRadians);
-		cosTable[theta]     = cos(thetaRadians);
-	}
-	
-	// Perform the accumulation
-	size_t max = 0;
+    const size_t inWidth   = input.getWidth();
+    const size_t inHeight  = input.getHeight();
+    const size_t outWidth  = output.getWidth();
+    const size_t outHeight = output.getHeight();
 
-	for (size_t y = minY; y <= maxY; ++y)
-	{
-		for (size_t x = 0; x < width; ++x)
-		{
-			if (highContrast(input, channel, x, y, minContrast))
-			{
-				for (size_t theta = 0; theta < thetaLevels; ++theta)
-				{
-					// Calculate r using polar normal form (r = x*cos(theta) + y*sin(theta))
-					double r    = cosTable[theta] * x + sinTable[theta] * y;
-					
-					// Scale r to the range [-maxRadius/2, maxRadius]
-					int rScaled = (int) round(r * halfRAxisSize / maxRadius) + halfRAxisSize;
-					
-					// Update the corresponding slot in the accumulator buffer
-					int index      = rScaled * oWidth + theta;
-					size_t current = accumulationBuffer[index];
-					accumulationBuffer[index]++;
+    const size_t maxRadius     = (int)ceil(sqrt(inWidth * inWidth + inHeight * inHeight));
+    const size_t halfRAxisSize = outHeight / 2;
 
-					// Update the max value
-					if (current > max)
-						max = current + 1;
-				}
-			}
-		}
-	}
-	
-	// Convert the accumulation to a valid channel by converting each cell
-	// to a corresponding grey level
-	for (size_t i = 0; i < oWidth * oHeight; ++i)
-	{
-		byte value = (byte) (((double) accumulationBuffer[i] / (double) max) * 255);
-		outputPixels[4 * i + 0] = value;
-		outputPixels[4 * i + 1] = value;
-		outputPixels[4 * i + 2] = value;
-		outputPixels[4 * i + 3] = 0xFF;
-		//if (outputPixels[4 * i + channel] != 0)
-		//cout << "i: " << i << " - " << (int) outputPixels[4 * i + channel] << endl;
-	}
-	
-	delete[] sinTable;
-	delete[] cosTable;
-	delete[] accumulationBuffer;
+    // X output ranges from minTheta to maxTheta degrees
+    // Y output ranges from -maxRadius to maxRadius
+    const double minThetaRadians = PI / 180.0 * args.minThetaDegrees;
+    const double maxThetaRadians = PI / 180.0 * args.maxThetaDegrees;
+    const double range           = maxThetaRadians - minThetaRadians;
+
+    // Precompute the sin and cos values we will use for each value of theta
+    double* sinTable = new double[outWidth];
+    double* cosTable = new double[outWidth];
+    for (size_t theta = 0; theta < outWidth; ++theta)
+    {
+        // Map theta from [0, width] -> [minThetaRadians, maxThetaRadians]
+        double thetaRadians = (theta * range) / outWidth + minThetaRadians;
+        sinTable[theta]     = sin(thetaRadians);
+        cosTable[theta]     = cos(thetaRadians);
+    }
+
+    // Perform the accumulation
+    size_t max = 0;
+    size_t* accumulationBuffer = new size_t[outWidth * outHeight];
+    for (size_t y = args.minY; y <= args.maxY; ++y)
+    {
+        for (size_t x = 0; x < inWidth; ++x)
+        {
+            // Only process pixels that are brighter than its surroundings
+            if (highContrast(input, channel, x, y, args.minContrast))
+            {
+                for (size_t theta = 0; theta < outWidth; ++theta)
+                {
+                    // Calculate r using the polar normal form: 
+                    // (r = x*cos(theta) + y*sin(theta))
+                    double r = cosTable[theta] * x + sinTable[theta] * y;
+
+                    // Scale r to the range [-maxRadius/2, maxRadius/2]
+                    int rScaled = (int) round(r * halfRAxisSize / maxRadius) 
+                        + halfRAxisSize;
+
+                    // Update the corresponding slot in the accumulator buffer
+                    int index      = rScaled * outWidth + theta;
+                    size_t current = accumulationBuffer[index];
+                    accumulationBuffer[index]++;
+
+                    // Update the max value as we go
+                    if (current > max)
+                        max = current + 1;
+                }
+            }
+        }
+    }
+
+    // Convert the accumulation to a valid channel by converting each cell
+    // to a corresponding grey level. Ignore the other channels
+    byte* outputPixels = output.getData();
+    for (size_t i = 0; i < outWidth * outHeight; ++i)
+    {
+        outputPixels[4 * i + channel] = 
+            (byte) (((double) accumulationBuffer[i] / (double) max) * 255);
+    }
+
+    delete[] sinTable;
+    delete[] cosTable;
+    delete[] accumulationBuffer;
 }
 
 int main(int argc, char** argv)
 {
-	// Sort out the command line arguments
-	Arguments args;
-	if (!parseArguments(argc, argv, args))
-		return 1;
-	
-	cout << "INPUT: " << args.srcImageFilename << endl;
-	cout << "OUTPUT:" << args.destImageFilename << endl;
-	// Initialize DevIL
-	ilInit();
-	
-	// Load the input image
-	Image input;
-	if (!input.load(args.srcImageFilename))
-	{
-		cerr << "Unable to open file: " << args.srcImageFilename << endl;
-		return 2;
-	}
-	
-	size_t channel      = 0;
-	double minTheta     = 0.0;
-	double maxTheta     = 3.1415926535;
-	size_t thetaLevels  = 320;
-	size_t radiusLevels = 256;
-	size_t minY         = 0;
-	size_t maxY         = input.getHeight() - 1;
-	size_t minContrast  = 64;
-	
-	Image output(thetaLevels, radiusLevels);
-	houghTransform(input, output, channel, minTheta, maxTheta, thetaLevels, radiusLevels, minY, maxY, minContrast);
-	
-	if (!output.save(args.destImageFilename))
-	{
-		cerr << "Unable to open file: " << args.destImageFilename << endl;
-		return 3;
-	}
-	else cout << args.destImageFilename << " successfully saved!" << endl;
+    // Sort out the command line arguments
+    Arguments args;
+    if (!parseArguments(argc, argv, args))
+        return 1;
 
-	return 0;
+    // Initialize DevIL
+    ilInit();
+
+    // Load the input image
+    Image input;
+    if (!input.load(args.srcImageFilename))
+    {
+        cerr << "Unable to open file: " << args.srcImageFilename << endl;
+        return 2;
+    }
+
+    if (args.maxY == 0)
+        args.maxY = input.getHeight() - 1;
+    
+    // Create the output image
+    Image output(args.destImageWidth, args.destImageHeight);
+    
+    if (args.srcChannel == -1)
+    {
+        for (size_t i = 0; i < 3; ++i)
+        {
+            houghTransform(input, output, i, args);
+        }
+    }
+    else houghTransform(input, output, args.srcChannel, args);
+
+    // Save the output image
+    if (!output.save(args.destImageFilename))
+    {
+        cerr << "Unable to open file: " << args.destImageFilename << endl;
+        return 3;
+    }
+    else cout << args.destImageFilename << " successfully saved!" << endl;
+
+    return 0;
 }
