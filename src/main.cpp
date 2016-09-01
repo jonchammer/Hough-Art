@@ -78,6 +78,21 @@ bool parseArguments(int argc, char** argv, Arguments& args)
             args.maxThetaDegrees = atof(argv[i + 1]);
             ++i;
         }
+        else if (strcmp(argv[i], "-y") == 0)
+        {
+            args.minY = atoi(argv[i + 1]);
+            ++i;
+        }
+        else if (strcmp(argv[i], "-Y") == 0)
+        {
+            args.maxY = atoi(argv[i + 1]);
+            ++i;
+        }
+        else if (strcmp(argv[i], "-C") == 0)
+        {
+            args.minContrast = atoi(argv[i + 1]);
+            ++i;
+        }
     }
     
     return true;

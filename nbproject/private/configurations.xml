@@ -23,6 +23,8 @@
         </df>
       </df>
       <df name="images">
+        <df name="contrast">
+        </df>
       </df>
       <df name="include">
         <in>Image.h</in>
@@ -73,18 +75,18 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 1024 -h 768 -c 2</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 4096 -h 1024</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 4096 -h 2160</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/skyline.jpg -w 4096 -h 2160</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 1024 -h 768 -c -1</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/marie.jpg -w 1024 -h 768 </runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -w 1024 -h 768</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/skyline2.jpg -o ../images/skyline2_out.png -w 1024 -h 768</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/benji.jpg -o ../images/benji_out.png -w 1024 -h 768</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/benji.jpg -o ../images/benji_out.jpg -w 1024 -h 768</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test1.png -w 1024 -h 768</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test1.png -w 1024 -h 768 -C 1</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test1.png -w 1024 -h 768 -C 32</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test32.png -w 1024 -h 768 -C 32</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test64.png -w 1024 -h 768 -C 64</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test128.png -w 1024 -h 768 -C 128</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/contrast/test16.png -w 1024 -h 768 -C 16</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/contrast/test8.png -w 1024 -h 768 -C 8</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/contrast/test4.png -w 1024 -h 768 -C 4</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/contrast/test2.png -w 1024 -h 768 -C 2</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" ../images/benji.jpg -o ../images/benji_out.jpg -w 1024 -h 768</runcommand>
+        <runcommand>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/contrast/test2.png -w 1024 -h 768 -C 2</runcommand>
         <rundir>build</rundir>
         <buildfirst>false</buildfirst>
         <terminal-type>0</terminal-type>
