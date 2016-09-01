@@ -194,7 +194,8 @@ int main(int argc, char** argv)
 
     // Initialize DevIL
     ilInit();
-
+    ilSetInteger(IL_JPG_QUALITY, 99);
+    
     // Load the input image
     Image input;
     if (!input.load(args.srcImageFilename))

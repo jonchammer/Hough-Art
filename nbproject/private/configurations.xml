@@ -73,17 +73,18 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test.png</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 2048 -h 1024</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 1024 -h 768</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 1024 -h 768 -c 2</runcommandpicklistitem>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 1024 -h 768 -c -1</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 4096 -h 1024</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 4096 -h 2160</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/skyline.jpg -w 4096 -h 2160</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/test2.png -w 1024 -h 768 -c -1</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/marie.jpg -w 1024 -h 768 </runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -w 1024 -h 768</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/skyline2.jpg -o ../images/skyline2_out.png -w 1024 -h 768</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/benji.jpg -o ../images/benji_out.png -w 1024 -h 768</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/benji.jpg -o ../images/benji_out.jpg -w 1024 -h 768</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" ../images/test2.png -w 4096 -h 2160</runcommand>
+        <runcommand>"${OUTPUT_PATH}" ../images/benji.jpg -o ../images/benji_out.jpg -w 1024 -h 768</runcommand>
         <rundir>build</rundir>
         <buildfirst>false</buildfirst>
         <terminal-type>0</terminal-type>
