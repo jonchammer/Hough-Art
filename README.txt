@@ -46,7 +46,11 @@ Documentation:
        c = 0 corresponds to the red channel, c = 1 corresponds to the green channel, and 
        c = 2 cooresponds to the blue channel. If c = -1, all channels will be used, and the 
        results will be superimposed upon one another.
-  
+
+  -n : Specify the number of threads to be used for acceleration. The default value is 0, meaning
+       if the host processor has N cores, N threads will be spawned. Generally speaking, more
+       threads will reduce the amount of computation time.
+
   -C : Specify the contrast (values range from 1 to 255). The larger the value, the fewer "lines" 
        will be kept by the Hough algorithm, resulting in a darker image overall. See the examples 
        in images/contrast for some example images. Note that this is different than adjusting

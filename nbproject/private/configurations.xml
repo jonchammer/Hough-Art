@@ -25,6 +25,8 @@
       <df name="images">
         <df name="contrast">
         </df>
+        <df name="gamma">
+        </df>
       </df>
       <df name="include">
         <in>Image.h</in>
@@ -62,8 +64,6 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
-        <gdb_signals>
-        </gdb_signals>
         <gdb_options>
           <DebugOptions>
           </DebugOptions>
@@ -75,7 +75,6 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test1.png -w 1024 -h 768</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test1.png -w 1024 -h 768 -C 1</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test1.png -w 1024 -h 768 -C 32</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/test32.png -w 1024 -h 768 -C 32</runcommandpicklistitem>
@@ -85,8 +84,9 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/contrast/test8.png -w 1024 -h 768 -C 8</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/contrast/test4.png -w 1024 -h 768 -C 4</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/contrast/test2.png -w 1024 -h 768 -C 2</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/wide.png -w 1024 -h 768 -M 360.0</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/contrast/test2.png -w 1024 -h 768 -C 2</runcommand>
+        <runcommand>"${OUTPUT_PATH}" ../images/fob.jpg -o ../images/wide.png -w 1024 -h 768 -M 360.0</runcommand>
         <rundir>build</rundir>
         <buildfirst>false</buildfirst>
         <terminal-type>0</terminal-type>
@@ -118,8 +118,6 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
-        <gdb_signals>
-        </gdb_signals>
         <gdb_options>
           <DebugOptions>
           </DebugOptions>
