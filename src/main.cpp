@@ -11,17 +11,18 @@ struct Arguments
 {
     string srcImageFilename;
     int srcChannel;
-    
+
     string destImageFilename;
     size_t destImageWidth;
     size_t destImageHeight;
-    
+
     double minThetaDegrees;
     double maxThetaDegrees;
     size_t minY;
     size_t maxY;
     size_t minContrast;
-    
+    double gamma;
+
     // Assign default values for each argument
     Arguments() : 
         srcChannel(-1),
@@ -32,7 +33,8 @@ struct Arguments
         maxThetaDegrees(180.0),
         minY(0),
         maxY(0),
-        minContrast(64)
+        minContrast(64),
+        gamma(1.0)
     {}
 };
 
@@ -93,8 +95,13 @@ bool parseArguments(int argc, char** argv, Arguments& args)
             args.minContrast = atoi(argv[i + 1]);
             ++i;
         }
+        else if (strcmp(argv[i], "-g") == 0)
+		{
+			args.gamma = atof(argv[i + 1]);
+			++i;
+		}
     }
-    
+
     return true;
 }
 
@@ -110,22 +117,22 @@ bool highContrast(Image& input, size_t channel, int centerX, int centerY, int mi
         int newY = centerY + y;
         if (newY < 0 || newY >= (int) height)
             continue;
-        
+
         for (int x = -1; x <= 1; ++x)
         {
             int newX = centerX + x;
             if (newX < 0 || newX >= (int) width)
                 continue;
-            
+
             int index = 4 * (newY * width + newX) + channel;
             if (abs((char)pixels[index] - centerValue) >= minContrast)
                 return true;
         }
     }
-    
+
     return false;
 }
-	
+
 void houghTransform(Image& input, Image& output, size_t channel, Arguments& args)
 {
     const size_t inWidth   = input.getWidth();
@@ -190,9 +197,11 @@ void houghTransform(Image& input, Image& output, size_t channel, Arguments& args
     // to a corresponding grey level. Ignore the other channels
     byte* outputPixels = output.getData();
     for (size_t i = 0; i < outWidth * outHeight; ++i)
-    {
-        outputPixels[4 * i + channel] = 
-            (byte) (((double) accumulationBuffer[i] / (double) max) * 255);
+	{
+        // Scale the pixels to [0, 1], and then apply gamma correction
+        double val       = (double) accumulationBuffer[i] / (double) max;
+        double corrected = pow(val, 1.0 / args.gamma);
+        outputPixels[4 * i + channel] = (byte) (corrected * 255);
     }
 
     delete[] sinTable;
@@ -210,7 +219,7 @@ int main(int argc, char** argv)
     // Initialize DevIL
     ilInit();
     ilSetInteger(IL_JPG_QUALITY, 99);
-    
+
     // Load the input image
     Image input;
     if (!input.load(args.srcImageFilename))
@@ -221,10 +230,10 @@ int main(int argc, char** argv)
 
     if (args.maxY == 0)
         args.maxY = input.getHeight() - 1;
-    
+
     // Create the output image
     Image output(args.destImageWidth, args.destImageHeight);
-    
+
     if (args.srcChannel == -1)
     {
         for (size_t i = 0; i < 3; ++i)
