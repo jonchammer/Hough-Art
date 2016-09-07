@@ -269,81 +269,81 @@ size_t getMax(size_t* buffer, size_t width, size_t height)
 //        delete[] buffers[i];
 //}
 
-void houghTransform(Image& input, Image& output, size_t channel, Arguments& args)
-{
-    const size_t inWidth   = input.getWidth();
-    const size_t inHeight  = input.getHeight();
-    const size_t outWidth  = output.getWidth();
-    const size_t outHeight = output.getHeight();
+//void houghTransform(Image& input, Image& output, size_t channel, Arguments& args)
+//{
+//    const size_t inWidth   = input.getWidth();
+//    const size_t inHeight  = input.getHeight();
+//    const size_t outWidth  = output.getWidth();
+//    const size_t outHeight = output.getHeight();
 
-    const size_t maxRadius     = (int)ceil(sqrt(inWidth * inWidth + inHeight * inHeight));
-    const size_t halfRAxisSize = outHeight / 2;
+//    const size_t maxRadius     = (int)ceil(sqrt(inWidth * inWidth + inHeight * inHeight));
+//    const size_t halfRAxisSize = outHeight / 2;
 
-    // X output ranges from minTheta to maxTheta degrees
-    // Y output ranges from -maxRadius to maxRadius
-    const double minThetaRadians = PI / 180.0 * args.minThetaDegrees;
-    const double maxThetaRadians = PI / 180.0 * args.maxThetaDegrees;
-    const double range           = maxThetaRadians - minThetaRadians;
+//    // X output ranges from minTheta to maxTheta degrees
+//    // Y output ranges from -maxRadius to maxRadius
+//    const double minThetaRadians = PI / 180.0 * args.minThetaDegrees;
+//    const double maxThetaRadians = PI / 180.0 * args.maxThetaDegrees;
+//    const double range           = maxThetaRadians - minThetaRadians;
 
-    // Precompute the sin and cos values we will use for each value of theta
-    double* sinTable = new double[outWidth];
-    double* cosTable = new double[outWidth];
-    for (size_t theta = 0; theta < outWidth; ++theta)
-    {
-        // Map theta from [0, width] -> [minThetaRadians, maxThetaRadians]
-        double thetaRadians = (theta * range) / outWidth + minThetaRadians;
-        sinTable[theta]     = sin(thetaRadians);
-        cosTable[theta]     = cos(thetaRadians);
-    }
+//    // Precompute the sin and cos values we will use for each value of theta
+//    double* sinTable = new double[outWidth];
+//    double* cosTable = new double[outWidth];
+//    for (size_t theta = 0; theta < outWidth; ++theta)
+//    {
+//        // Map theta from [0, width] -> [minThetaRadians, maxThetaRadians]
+//        double thetaRadians = (theta * range) / outWidth + minThetaRadians;
+//        sinTable[theta]     = sin(thetaRadians);
+//        cosTable[theta]     = cos(thetaRadians);
+//    }
 
-    // Perform the accumulation
-    size_t max = 0;
-    size_t* accumulationBuffer = new size_t[outWidth * outHeight];
-    for (size_t y = args.minY; y <= args.maxY; ++y)
-    {
-        for (size_t x = 0; x < inWidth; ++x)
-        {
-            // Only process pixels that are brighter than its surroundings
-            if (highContrast(input, channel, x, y, args.minContrast))
-            {
-                for (size_t theta = 0; theta < outWidth; ++theta)
-                {
-                    // Calculate r using the polar normal form: 
-                    // (r = x*cos(theta) + y*sin(theta))
-                    double r = cosTable[theta] * x + sinTable[theta] * y;
+//    // Perform the accumulation
+//    size_t max = 0;
+//    size_t* accumulationBuffer = new size_t[outWidth * outHeight];
+//    for (size_t y = args.minY; y <= args.maxY; ++y)
+//    {
+//        for (size_t x = 0; x < inWidth; ++x)
+//        {
+//            // Only process pixels that are brighter than its surroundings
+//            if (highContrast(input, channel, x, y, args.minContrast))
+//            {
+//                for (size_t theta = 0; theta < outWidth; ++theta)
+//                {
+//                    // Calculate r using the polar normal form: 
+//                    // (r = x*cos(theta) + y*sin(theta))
+//                    double r = cosTable[theta] * x + sinTable[theta] * y;
 
-                    // Scale r to the range [-maxRadius/2, maxRadius/2]
-                    int rScaled = (int) round(r * halfRAxisSize / maxRadius) 
-                        + halfRAxisSize;
+//                    // Scale r to the range [-maxRadius/2, maxRadius/2]
+//                    int rScaled = (int) round(r * halfRAxisSize / maxRadius) 
+//                        + halfRAxisSize;
 
-                    // Update the corresponding slot in the accumulator buffer
-                    int index      = rScaled * outWidth + theta;
-                    size_t current = accumulationBuffer[index];
-                    accumulationBuffer[index]++;
+//                    // Update the corresponding slot in the accumulator buffer
+//                    int index      = rScaled * outWidth + theta;
+//                    size_t current = accumulationBuffer[index];
+//                    accumulationBuffer[index]++;
 
-                    // Update the max value as we go
-                    if (current > max)
-                        max = current + 1;
-                }
-            }
-        }
-    }
+//                    // Update the max value as we go
+//                    if (current > max)
+//                        max = current + 1;
+//                }
+//            }
+//        }
+//    }
 
-    // Convert the accumulation to a valid channel by converting each cell
-    // to a corresponding grey level. Ignore the other channels
-    byte* outputPixels = output.getData();
-    for (size_t i = 0; i < outWidth * outHeight; ++i)
-	{
-        // Scale the pixels to [0, 1], and then apply gamma correction
-        double val       = (double) accumulationBuffer[i] / (double) max;
-        double corrected = pow(val, 1.0 / args.gamma);
-        outputPixels[4 * i + channel] = (byte) (corrected * 255);
-    }
+//    // Convert the accumulation to a valid channel by converting each cell
+//    // to a corresponding grey level. Ignore the other channels
+//    byte* outputPixels = output.getData();
+//    for (size_t i = 0; i < outWidth * outHeight; ++i)
+//	{
+//        // Scale the pixels to [0, 1], and then apply gamma correction
+//        double val       = (double) accumulationBuffer[i] / (double) max;
+//        double corrected = pow(val, 1.0 / args.gamma);
+//        outputPixels[4 * i + channel] = (byte) (corrected * 255);
+//    }
 
-    delete[] sinTable;
-    delete[] cosTable;
-    delete[] accumulationBuffer;
-}
+//    delete[] sinTable;
+//    delete[] cosTable;
+//    delete[] accumulationBuffer;
+//}
 
 int main(int argc, char** argv)
 {

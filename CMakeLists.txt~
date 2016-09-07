@@ -44,7 +44,9 @@ add_executable(hough_art ${SOURCES})
 target_link_libraries(hough_art ${IL_LIBRARIES})
 
 # Link the thread library
-target_link_libraries(hough_art ${CMAKE_THREAD_LIBS_INIT})
+#set (CMAKE_THREAD_LIBS_INIT "-pthread")
+#message("THREAD LIBRARIES: " ${CMAKE_THREAD_LIBS_INIT})
+#target_link_libraries(hough_art ${CMAKE_THREAD_LIBS_INIT})
 
 # Copy all the DLLs from 'libs' into the executable directory 
 file(GLOB DLLS "libs/*.dll")
