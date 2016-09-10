@@ -123,9 +123,9 @@ bool parseArguments(int argc, char** argv, Arguments& args)
 }
 
 // Returns the largest element in the given 2D array.
-size_t getMax(size_t* buffer, size_t width, size_t height)
+double getMax(double* buffer, size_t width, size_t height)
 {
-    size_t max = 0;
+    double max = 0;
     for (size_t i = 0; i < width * height; ++i)
     {
         if (buffer[i] > max)
@@ -168,7 +168,7 @@ bool highContrast(Image& input, size_t channel, int centerX, int centerY, int mi
 
 // This function is called from inside one of the helper threads. It performs
 // the actual computations for the Hough transform.
-void accumulate(Image& input, size_t* accumulationBuffer, size_t channel, Arguments& args, 
+void accumulate(Image& input, double* accumulationBuffer, size_t channel, Arguments& args, 
                 size_t minY, size_t maxY, double* sinTable, double* cosTable)
 {
     const size_t inWidth       = input.getWidth();
@@ -192,12 +192,21 @@ void accumulate(Image& input, size_t* accumulationBuffer, size_t channel, Argume
                     double r = cosTable[theta] * x + sinTable[theta] * y;
 
                     // Scale r to the range [-maxRadius/2, maxRadius/2]
-                    int rScaled = (int) round(r * halfRAxisSize / maxRadius) 
-                        + halfRAxisSize;
-
+                    // To avoid discretization artifacts, we add a bit to both
+                    // cells covered by val. The weight is proportional to how
+                    // close we are to the lower bound or the upper bound.
+                    double val  = (r * halfRAxisSize / maxRadius) + halfRAxisSize;
+                    int rLow    = (int) floor(val);
+                    int rHi     = (int) ceil(val);
+                    
+                    double weightHigh = val - (int) val;
+                    double weightLow  = 1.0 - weightHigh;
+                    
                     // Update the corresponding slot in the accumulator buffer
-                    int index = rScaled * outWidth + theta;
-                    accumulationBuffer[index]++;
+                    int indexLow  = rLow * outWidth + theta;
+                    int indexHigh = rHi  * outWidth + theta;
+                    accumulationBuffer[indexLow]  += weightLow;
+                    accumulationBuffer[indexHigh] += weightHigh;
                 }
             }
         }
@@ -229,7 +238,7 @@ void houghTransform(Image& input, Image& output, size_t channel, Arguments& args
     }
 
     // Calculate the actual transform in multiple threads
-    vector<size_t*> buffers;
+    vector<double*> buffers;
     vector<thread> threads;
     for (size_t i = 0; i < args.numThreads; ++i)
     {
@@ -240,7 +249,7 @@ void houghTransform(Image& input, Image& output, size_t channel, Arguments& args
         if (i == args.numThreads - 1)
             maxY = inHeight - 1;
 
-        buffers.push_back(new size_t[outWidth * outHeight]());
+        buffers.push_back(new double[outWidth * outHeight]());
         threads.push_back(thread(accumulate, std::ref(input), buffers[i], 
             channel, std::ref(args), minY, maxY, sinTable, cosTable));
     }
@@ -249,7 +258,7 @@ void houghTransform(Image& input, Image& output, size_t channel, Arguments& args
         threads[i].join();
     
     // Combine the various buffers into one
-    size_t* accumulationBuffer = new size_t[outWidth * outHeight]();
+    double* accumulationBuffer = new double[outWidth * outHeight]();
     for (size_t i = 0; i < args.numThreads; ++i)
     {
         for (size_t j = 0; j < outWidth * outHeight; ++j)
@@ -257,7 +266,7 @@ void houghTransform(Image& input, Image& output, size_t channel, Arguments& args
     }
 
     // Determine the brightest element in this channel
-    size_t max = getMax(accumulationBuffer, outWidth, outHeight);
+    double max = getMax(accumulationBuffer, outWidth, outHeight);
 
     // Convert the accumulation to a valid channel by converting each cell
     // to a corresponding grey level. Ignore the other channels
@@ -265,7 +274,7 @@ void houghTransform(Image& input, Image& output, size_t channel, Arguments& args
     for (size_t i = 0; i < outWidth * outHeight; ++i)
 	{
         // Scale the pixels to [0, 1], and then apply gamma correction
-        double val       = (double) accumulationBuffer[i] / (double) max;
+        double val       = accumulationBuffer[i] / max;
         double corrected = pow(val, 1.0 / args.gamma);
         outputPixels[4 * i + channel] = (byte) (corrected * 255);
     }
