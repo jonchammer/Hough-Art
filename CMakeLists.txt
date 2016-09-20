@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 2.6)
 project(hough_art)
 
 # If the user doesn't specify a build type (e.g. with -DCMAKE_BUILD_TYPE=Release),
-# choose Debug as the default value.
+# choose Release as the default value.
 if (NOT CMAKE_BUILD_TYPE)
-	set (CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
+	set (CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # Add compiler flags here (e.g. -O3, -Wall, etc.)

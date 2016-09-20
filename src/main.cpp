@@ -6,6 +6,7 @@
 #include <vector>
 #include <chrono>
 #include "Image.h"
+#include "FileIO.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -17,6 +18,7 @@ struct Arguments
     // Source information
     string srcImageFilename;
     int srcChannel;
+    bool useDirectory;
 
     // Destination information
     string destImageFilename;
@@ -37,6 +39,7 @@ struct Arguments
     // Assign default values for each argument
     Arguments() : 
         srcChannel(-1),
+        useDirectory(false),
         destImageFilename("../images/output.png"), 
         destImageWidth(320), 
         destImageHeight(160),
@@ -59,13 +62,15 @@ bool parseArguments(int argc, char** argv, Arguments& args)
     }
 
     args.srcImageFilename = argv[1];
-
+    bool customOutput     = false;
+    
     for (int i = 2; i < argc; ++i)
     {
         if (strcmp(argv[i], "-o") == 0)
         {
             args.destImageFilename = argv[i + 1];
             ++i;
+            customOutput = true;
         }
         else if (strcmp(argv[i], "-w") == 0)
         {
@@ -108,17 +113,26 @@ bool parseArguments(int argc, char** argv, Arguments& args)
             ++i;
         }
         else if (strcmp(argv[i], "-g") == 0)
-		{
-			args.gamma = atof(argv[i + 1]);
-			++i;
-		}
+        {
+                args.gamma = atof(argv[i + 1]);
+                ++i;
+        }
         else if (strcmp(argv[i], "-n") == 0)
         {
             args.numThreads = atoi(argv[i + 1]);
             ++i;
         }
+        else if (strcmp(argv[i], "-d") == 0)
+        {
+            args.useDirectory = true;
+        }
     }
 
+    // If the user chose to do batch processing, but didn't specify a directory,
+    // ensure the default option is actually a directory.
+    if (args.useDirectory && customOutput)
+        args.destImageFilename = "../images";
+    
     return true;
 }
 
@@ -286,25 +300,18 @@ void houghTransform(Image& input, Image& output, size_t channel, Arguments& args
         delete[] buffers[i];
 }
 
-int main(int argc, char** argv)
+// Go through the work necessary to process a single file. We load the image
+// into memory, perform the Hough Transform, and write the result to the given
+// output file.
+void processFile(const string& inputFilename, const string& outputFilename, 
+    Arguments& args)
 {
-    auto startTime = high_resolution_clock::now();
-    
-    // Sort out the command line arguments
-    Arguments args;
-    if (!parseArguments(argc, argv, args))
-        return 1;
-
-    // Initialize DevIL
-    ilInit();
-    ilSetInteger(IL_JPG_QUALITY, 99);
-
     // Load the input image
     Image input;
-    if (!input.load(args.srcImageFilename))
+    if (!input.load(inputFilename))
     {
-        cerr << "Unable to open file: " << args.srcImageFilename << endl;
-        return 2;
+        cerr << "Unable to open file: " << inputFilename << endl;
+        return;
     }
 
     // Some arguments are resolved at runtime.
@@ -319,20 +326,45 @@ int main(int argc, char** argv)
     if (args.srcChannel == -1)
     {
         for (size_t i = 0; i < 3; ++i)
-        {
             houghTransform(input, output, i, args);
-        }
     }
     else houghTransform(input, output, args.srcChannel, args);
 
     // Save the output image
-    if (!output.save(args.destImageFilename))
-    {
-        cerr << "Unable to open file: " << args.destImageFilename << endl;
-        return 3;
-    }
-    else cout << args.destImageFilename << " successfully saved!" << endl;
+    if (!output.save(outputFilename))
+        cerr << "Unable to open file: " << outputFilename << endl;
 
+    else cout << outputFilename << " successfully saved!" << endl;
+}
+
+int main(int argc, char** argv)
+{
+    auto startTime = high_resolution_clock::now();
+    
+    // Sort out the command line arguments
+    Arguments args;
+    if (!parseArguments(argc, argv, args))
+        return 1;
+
+    // Initialize DevIL
+    ilInit();
+    ilSetInteger(IL_JPG_QUALITY, 99);
+
+    // Input is a directory of images
+    if (args.useDirectory)
+    {
+        vector<string> filenames = listFiles(args.srcImageFilename);
+        for (int i = 0; i < filenames.size(); ++i)
+        {
+            string inputFilename  = args.srcImageFilename  + "/" + filenames[i];
+            string outputFilename = args.destImageFilename + "/" + filenames[i];
+            processFile(inputFilename, outputFilename, args);
+        }
+    }
+    
+    // Input is a single image
+    else processFile(args.srcImageFilename, args.destImageFilename, args);
+        
     // Print the elapsed time
     auto endTime = high_resolution_clock::now();
     cout << "Time elapsed (ms): " 

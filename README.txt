@@ -31,13 +31,19 @@ Dependencies:
       installation directory.
 
 Documentation:
-  The first argument is required. It is the name/location of the file to be used for input. All 
-  other arguments have both a command and an associated argument of their own. The options are 
-  as follows:
+  The first argument is required. It is the name/location of the file to be used for input. 
+  If the -d flag is set, the first argument specifies the directory containing the input files
+  instead. All other arguments have both a command and an associated argument of their own. 
+  The options are as follows:
   
   -o : Specify the name and location of the output file. DevIL supports many different extensions, 
-       including .png and .jpg. The default value is "../images/output.png".
-  
+       including .png and .jpg. The default value is "../images/output.png". If the -d flag is set,
+	   This parameter specifies the directory at which the resulting files will be saved. The
+	   filename will be the same as the input filename.
+	   
+  -d : Flag - Enable directory processing. All files in the input directory will be processed
+       and written to the output directory with the same filename.
+	   
   -w : Specify the width of the output image in pixels. The default value is 320.
   
   -h : Specify the height of the output image in pixels. The default value is 160.
