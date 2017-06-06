@@ -27,7 +27,7 @@ struct Arguments
     T maxThetaDegrees;
     size_t minY;
     size_t maxY;
-    size_t minContrast;
+    T minContrast;
     T gamma;
 
     // Program options
@@ -44,7 +44,7 @@ struct Arguments
         maxThetaDegrees(180.0),
         minY(0),
         maxY(0),
-        minContrast(64),
+        minContrast(0.5),
         gamma(1.0),
         numThreads(0)
     {}
@@ -106,7 +106,7 @@ template <class T> bool parseArguments(int argc, char** argv, Arguments<T>& args
         }
         else if (strcmp(argv[i], "-C") == 0)
         {
-            args.minContrast = atoi(argv[i + 1]);
+            args.minContrast = atof(argv[i + 1]);
             ++i;
         }
         else if (strcmp(argv[i], "-g") == 0)
