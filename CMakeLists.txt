@@ -6,6 +6,7 @@ project(hough_art)
 if (NOT CMAKE_BUILD_TYPE)
 	set (CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
+message("Building in ${CMAKE_BUILD_TYPE} mode.")
 
 # Add compiler flags here (e.g. -O3, -Wall, etc.)
 # This is also needed to use C++11. "-std=c++11"
@@ -46,6 +47,6 @@ target_link_libraries(hough_art ${IL_LIBRARIES})
 # Link the thread library
 target_link_libraries(hough_art ${CMAKE_THREAD_LIBS_INIT})
 
-# Copy all the DLLs from 'libs' into the executable directory 
+# Copy all the DLLs from 'libs' into the executable directory
 file(GLOB DLLS "libs/*.dll")
 file(COPY ${DLLS} DESTINATION ${PROJECT_SOURCE_DIR}/build)
