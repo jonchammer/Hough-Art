@@ -3,6 +3,11 @@
 
 #include <cmath>
 
+// Make sure PI exists
+#ifndef M_PI
+    #define M_PI 3.14159265358979323
+#endif
+
 // Represents a segment of the input image that should be processed in pixels.
 struct Window
 {
