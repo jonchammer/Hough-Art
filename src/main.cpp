@@ -2,6 +2,7 @@
 #include <thread>
 #include <vector>
 #include <chrono>
+#include <algorithm>
 
 #include "Arguments.h"
 #include "Image.h"
@@ -12,20 +13,6 @@ using std::vector;
 using std::thread;
 using std::cout;
 using std::endl;
-
-// Returns the largest element in the given 2D array.
-template <class T>
-T getMax(T* buffer, size_t width, size_t height)
-{
-    T max = buffer[0];
-    for (size_t i = 0; i < width * height; ++i)
-    {
-        if (buffer[i] > max)
-            max = buffer[i];
-    }
-
-    return max;
-}
 
 // Combines all of the channels in 'buffers' to form a single result. The result
 // is normalized to the range [0, 1] and gamma correction is applied.
@@ -50,12 +37,14 @@ Channel<T> merge(const vector<Channel<T>>& buffers, const Arguments<T>& args)
     }
 
     // Scale all pixels to the range [0, 1], and then apply gamma correction
-    T max = getMax(out.data, outWidth, outHeight);
-    for (size_t i = 0; i < outWidth * outHeight; ++i)
+    auto begin    = out.data;
+    auto end      = begin + outWidth * outHeight;
+    const T gamma = args.gamma;
+    T max         = *std::max_element(begin, end);
+    std::for_each(begin, end, [max, gamma](T& val)
     {
-        T val       = out.data[i] / max;
-        out.data[i] = pow(val, T{1.0} / args.gamma);
-    }
+        val = std::pow(val / max, T{1.0} / gamma);
+    });
     return out;
 }
 

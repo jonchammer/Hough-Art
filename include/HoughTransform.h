@@ -62,7 +62,7 @@ public:
     void transform(const Channel<T>& in, const Window window,
         const T minContrast, Channel<T>& out)
     {
-        const size_t maxRadius     = (int)ceil(sqrt(in.width * in.width + in.height * in.height));
+        const size_t maxRadius     = (int)std::ceil(std::sqrt(in.width * in.width + in.height * in.height));
         const size_t halfRAxisSize = out.height / 2;
 
         for (size_t y = window.yMin; y <= window.yMax; ++y)
@@ -83,8 +83,8 @@ public:
                         // cells covered by val. The weight is proportional to how
                         // close we are to the lower bound or the upper bound.
                         T val    = (r * halfRAxisSize / maxRadius) + halfRAxisSize;
-                        int rLow = (int) floor(val);
-                        int rHi  = (int) ceil(val);
+                        int rLow = (int) std::floor(val);
+                        int rHi  = (int) std::ceil(val);
 
                         T weightHigh = val - (int) val;
                         T weightLow  = T{1.0} - weightHigh;
@@ -121,7 +121,7 @@ private:
                 if (newX < 0 || newX >= width)
                     continue;
 
-                if (abs(in(newX, newY) - centerValue) >= minContrast)
+                if (std::abs(in(newX, newY) - centerValue) >= minContrast)
                     return true;
             }
         }

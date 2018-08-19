@@ -3,12 +3,13 @@
 
 #include <iostream>
 #include <cstring>
+#include <cstdint>
 #include "il.h"
 
 using std::string;
 
 // Useful typedef
-typedef unsigned char byte;
+typedef uint8_t byte;
 
 // Represents a single channel of an image.
 template <class T>
