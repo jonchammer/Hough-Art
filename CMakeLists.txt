@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(hough_art)
+project(hough_art LANGUAGES CXX CUDA)
 
 # If the user doesn't specify a build type (e.g. with -DCMAKE_BUILD_TYPE=Release),
 # choose Release as the default value.
@@ -8,8 +8,12 @@ if (NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 message("Building in ${CMAKE_BUILD_TYPE} mode.")
 
+# Options available to developers -set to reasonable default values
+option(ENABLE_CUDA "Enable CUDA Support" ON)
+
 # Define the sources
 set(SOURCES
+    src/Channel.cpp
     src/Image.cpp
     src/main.cpp
 )
@@ -24,9 +28,27 @@ target_include_directories(hough_art
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-target_compile_options(hough_art PRIVATE -Wall -Wextra -pthread)
-target_compile_options(hough_art PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
-target_compile_options(hough_art PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}>")
+
+# Either include the cuda implementations or the standard C++ ones
+if (ENABLE_CUDA)
+    target_sources(hough_art
+        PRIVATE
+        src/CudaChannel.cu
+        src/CudaHoughTransform.cu
+    )
+    set_target_properties(hough_art
+        PROPERTIES CUDA_SEPARABLE_COMPILATION ON
+    )
+    target_compile_definitions(hough_art PUBLIC -DENABLE_CUDA)
+else()
+    target_sources(hough_art
+        PRIVATE
+        src/HoughTransform.cpp
+    )
+    target_compile_options(hough_art PRIVATE -Wall -Wextra -pthread)
+    target_compile_options(hough_art PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>")
+    target_compile_options(hough_art PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}>")
+endif()
 
 # Attach threading library
 find_package(Threads REQUIRED)

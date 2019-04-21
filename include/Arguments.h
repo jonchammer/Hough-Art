@@ -130,6 +130,9 @@ template <class T> bool parseArguments(int argc, char** argv, Arguments<T>& args
     if (args.useDirectory && customOutput)
         args.destImageFilename = "../images";
 
+    #ifdef ENABLE_CUDA
+        args.numThreads = 1;
+    #endif
     return true;
 }
 

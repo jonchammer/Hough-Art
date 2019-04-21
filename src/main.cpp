@@ -17,28 +17,21 @@ using std::endl;
 // Combines all of the channels in 'buffers' to form a single result. The result
 // is normalized to the range [0, 1] and gamma correction is applied.
 template <class T>
-Channel<T> merge(const vector<Channel<T>>& buffers, const Arguments<T>& args)
+Channel merge(const vector<Channel>& buffers, const Arguments<T>& args)
 {
     const size_t outWidth  = args.destImageWidth;
     const size_t outHeight = args.destImageHeight;
 
-    Channel<T> out;
-    out.data   = new T[outWidth * outHeight]();
-    out.width  = outWidth;
-    out.height = outHeight;
-    out.stride = 1;
-
+    Channel out(outWidth, outHeight);
     for (size_t i = 0; i < buffers.size(); ++i)
     {
         for (size_t j = 0; j < outWidth * outHeight; ++j)
             out.data[j] += buffers[i].data[j];
-
-        delete[] buffers[i].data;
     }
 
     // Scale all pixels to the range [0, 1], and then apply gamma correction
-    auto begin    = out.data;
-    auto end      = begin + outWidth * outHeight;
+    auto begin    = out.data.begin();
+    auto end      = out.data.end();
     const T gamma = args.gamma;
     T max         = *std::max_element(begin, end);
     std::for_each(begin, end, [max, gamma](T& val)
@@ -60,11 +53,15 @@ void processParallel(const Image& input, Image& output,
     const size_t outHeight = output.getHeight();
 
     // Setup
-    Channel<T> in = input.readChannel<T>(channel);
-    HoughTransform<T> hough(args.minThetaDegrees, args.maxThetaDegrees, output.getWidth());
-    vector<Channel<T>> buffers(args.numThreads);
-    vector<thread> threads;
+    Channel in = input.readChannel(channel);
+    HoughTransform hough(args.minThetaDegrees, args.maxThetaDegrees, output.getWidth());
 
+    // Create accumulation buffers for each piece
+    vector<Channel> buffers;
+    for (size_t i = 0; i < args.numThreads; ++i)
+        buffers.emplace_back(outWidth, outHeight);
+
+    vector<thread> threads;
     for (size_t i = 0; i < args.numThreads; ++i)
     {
         // Divide the working area into segments for each thread. Each segment
@@ -79,16 +76,10 @@ void processParallel(const Image& input, Image& output,
         if (i == args.numThreads - 1)
             window.yMax = inHeight - 1;
 
-        // Set up the accumulation buffer for this piece
-        buffers[i].data   = new T[outWidth * outHeight]();
-        buffers[i].width  = outWidth;
-        buffers[i].height = outHeight;
-        buffers[i].stride = 1;
-
         // Start working
         threads.emplace_back
         (
-            &HoughTransform<T>::transform, &hough,
+            &HoughTransform::transform, &hough,
             std::cref(in), window, args.minContrast, std::ref(buffers[i])
         );
     }
@@ -97,9 +88,8 @@ void processParallel(const Image& input, Image& output,
         threads[i].join();
 
     // Merge the buffers from each thread and write to the output image.
-    Channel<T> out = merge(buffers, args);
+    Channel out = merge(buffers, args);
     output.writeChannel(out, channel);
-    delete[] out.data;
 }
 
 // Go through the work necessary to process a single file. We load the image
@@ -146,7 +136,7 @@ int main(int argc, char** argv)
     auto startTime = high_resolution_clock::now();
 
     // Sort out the command line arguments
-    Arguments<double> args;
+    Arguments<float> args;
     if (!parseArguments(argc, argv, args))
         return 1;
 

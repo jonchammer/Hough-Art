@@ -12,14 +12,14 @@ Image::Image(size_t width, size_t height)
     ilGenImages(1, &mID);
     ilBindImage(mID);
 
-    // Create a buffer we can work with, and bind it to a given ID 
+    // Create a buffer we can work with, and bind it to a given ID
     // so DevIL can work with it
     mData = new byte[width * height * 4]();
-    
+
     // Initialize the alpha channel to 0xFF
     for (size_t i = 0; i < width * height; ++i)
         mData[4 * i + 3] = 0xFF;
-    
+
     ilTexImage(width, height, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, mData);
 }
 
@@ -53,7 +53,7 @@ bool Image::load(const string& filename)
     if (!ilLoadImage(filename.c_str()))
         return false;
 
-    // Save the width and height 
+    // Save the width and height
     mWidth  = ilGetInteger(IL_IMAGE_WIDTH);
     mHeight = ilGetInteger(IL_IMAGE_HEIGHT);
 
@@ -70,7 +70,7 @@ bool Image::save(const string& filename)
 {
     ilBindImage(mID);
     ilEnable(IL_FILE_OVERWRITE);
-    
+
     // We have to rebind the data so DevIL is kept in sync
     ilTexImage(mWidth, mHeight, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, mData);
     return ilSaveImage(filename.c_str());
@@ -95,5 +95,22 @@ byte* Image::getData()
 {
     return mData;
 }
-	
-	
+
+Channel Image::readChannel(const size_t channel) const
+{
+    Channel result(mWidth, mHeight);
+    for (size_t i = 0; i < mWidth * mHeight; ++i)
+    {
+        result.data[i] = (mData[4 * i + channel]) / 255.0f;
+    }
+
+    return result;
+}
+
+void Image::writeChannel(const Channel& data, const size_t channel)
+{
+    for (size_t i = 0; i < mWidth * mHeight; ++i)
+    {
+        mData[4 * i + channel] = (byte)(data.data[i] * 255.0f);
+    }
+}
