@@ -3,9 +3,11 @@ it calculates the transform per channel and writes the results to an output file
 are included for customizing the results.
 
 **Example Input:**
+
 ![Example Input](images/funnel.jpg)
 
 **Example Output:**
+
 ![Example Output](images/funnel_128.jpg)
 
 # Compilation:
